@@ -1,9 +1,21 @@
 # Copyright (C) 2006  Mauricio Fernandez <mfp@acm.org>
 #
 
-require 'rdoc/ri/ri_cache'
-require 'rdoc/ri/ri_reader'
-require 'rdoc/ri/ri_descriptions'
+# evil monkey patch for 1.9.1 compat
+#class String
+#  alias each each_char
+#end
+
+begin
+  require 'rdoc/ri/ri_cache'
+  require 'rdoc/ri/ri_reader'
+  require 'rdoc/ri/ri_descriptions'
+rescue LoadError
+  require 'rdoc/ri/cache'
+  require 'rdoc/ri/reader'
+  require 'rdoc/ri/descriptions'
+end
+
 require 'fastri/version'
 
 
@@ -36,7 +48,7 @@ end
 
 module FastRI
 
-# This class provides the same functionality as RiReader, with some
+# This class provides the same functionality as Reader, with some
 # improvements:
 # * lower memory consumption
 # * ability to handle information from different sources separately.
@@ -53,7 +65,7 @@ class RiIndex
   # Redefine RI::MethodEntry#full_name to use the following notation:
   # Namespace::Foo.singleton_method (instead of ::). RiIndex depends on this to
   # tell singleton methods apart.
-  class ::RI::MethodEntry # :nodoc:
+  class RDoc::RI::MethodEntry # :nodoc:
     remove_method :full_name
     def full_name
       res = @in_class.full_name
@@ -234,7 +246,8 @@ class RiIndex
     methods    = Hash.new{|h,k| h[k] = []}
     namespaces = methods.clone 
     @paths.each_with_index do |path, source_index|
-      ri_reader = RI::RiReader.new(RI::RiCache.new(path))
+      puts "buggering #{path}"
+      ri_reader = RDoc::RI::Reader.new(RDoc::RI::Cache.new([path])) # RDOC2: changed path to [path]
       obtain_classes(ri_reader.top_level_namespace.first).each{|name| namespaces[name] << source_index }
       obtain_methods(ri_reader.top_level_namespace.first).each{|name| methods[name] << source_index }
     end
@@ -296,7 +309,7 @@ class RiIndex
     anIO.puts @method_array
     anIO.puts "=" * 80
   end
-#{{{ RiReader compatibility interface
+#{{{ Reader compatibility interface
 
   # Returns an array with the top level namespace.
   def top_level_namespace(scope = nil)
@@ -343,15 +356,17 @@ class RiIndex
   # by deserializing the YAML.
   def get_method(method_entry)
     path = method_entry.path_name
-    File.open(path) { |f| RI::Description.deserialize(f) }
+    File.open(path) { |f| RDoc::RI::Description.deserialize(f) }
   end
 
   # Return a ClassDescription for a given ClassEntry.
   def get_class(class_entry)
     result = nil
     for path in class_entry.path_names
-      path = RI::RiWriter.class_desc_path(path, class_entry)
-      desc = File.open(path) {|f| RI::Description.deserialize(f) }
+      # RDOC2:
+      # path = RDoc::RI::RiWriter.class_desc_path(path, class_entry)
+      path = RDoc::RI::Writer.class_desc_path(path, class_entry)
+      desc = File.open(path) {|f| RDoc::RI::Description.deserialize(f) }
       if result
         result.merge_in(desc)
       else

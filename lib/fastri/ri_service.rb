@@ -2,10 +2,17 @@
 #
 # Inspired by ri-emacs.rb by Kristof Bastiaensen <kristof@vleeuwen.org>
  
-require 'rdoc/ri/ri_paths'
-require 'rdoc/ri/ri_util'
-require 'rdoc/ri/ri_formatter'
-require 'rdoc/ri/ri_display'
+begin
+  require 'rdoc/ri/ri_paths'
+  require 'rdoc/ri/ri_util'
+  require 'rdoc/ri/ri_formatter'
+  require 'rdoc/ri/ri_display'
+rescue LoadError
+  require 'rdoc/ri/paths'
+  require 'rdoc/ri/util'
+  require 'rdoc/ri/formatter'
+  require 'rdoc/ri/display'
+end
 
 require 'fastri/ri_index.rb'
 require 'fastri/name_descriptor'
@@ -13,7 +20,9 @@ require 'fastri/name_descriptor'
 
 module FastRI
 
-class ::DefaultDisplay
+# RDOC2:
+# class ::DefaultDisplay
+class RDoc::RI::DefaultDisplay
   def full_params(method)
     method.params.split(/\n/).each do |p|
       p.sub!(/^#{method.name}\(/o,'(')
@@ -26,10 +35,12 @@ class ::DefaultDisplay
   end
 end
 
-class StringRedirectedDisplay < ::DefaultDisplay
+# RDOC2:
+# class StringRedirectedDisplay < ::DefaultDisplay
+class StringRedirectedDisplay < RDoc::RI::DefaultDisplay
   attr_reader :stringio, :formatter
   def initialize(*args)
-    super(*args)
+    super *args
     reset_stringio
   end
 
@@ -47,7 +58,7 @@ class StringRedirectedDisplay < ::DefaultDisplay
   end
 end
 
-class ::RI::TextFormatter
+class RDoc::RI::TextFormatter
   def puts(*a); @stringio.puts(*a) end
   def print(*a); @stringio.print(*a) end
 end
@@ -60,11 +71,11 @@ module FormatterRedirection
   end
 end
 
-class RedirectedAnsiFormatter < RI::AnsiFormatter
+class RedirectedAnsiFormatter < RDoc::RI::AnsiFormatter
   include FormatterRedirection
 end
 
-class RedirectedTextFormatter < RI::TextFormatter
+class RedirectedTextFormatter < RDoc::RI::TextFormatter
   include FormatterRedirection
 end
 
@@ -205,7 +216,9 @@ class RiService
       case entries[0].type
       when :namespace
         capture_stdout(display(options)) do |display|
-          display.display_class_info(@ri_reader.get_class(entries[0]), @ri_reader)
+          # RDOC2:
+          # display.display_class_info(@ri_reader.get_class(entries[0]), @ri_reader)
+          display.display_class_info(@ri_reader.get_class(entries[0]))
           if options[:extended]
             methods = @ri_reader.methods_under(entries[0], true)
             methods.each do |meth_entry|
@@ -226,7 +239,7 @@ class RiService
         formatter.wrap(entries.map{|x| x.full_name}.join(", "))
       end
     end
-  rescue RiError
+  rescue RDoc::RI::Error # RDOC2: changed RiError to RDoc::RI::Error
     return nil
   end
 
@@ -245,7 +258,7 @@ class RiService
       end
     end
     params_text
-  rescue RiError
+  rescue RDoc::RI::Error  # RDOC2: formerly RiError
     return nil
   end
 
@@ -383,7 +396,7 @@ class RiService
     return nil if entries.empty?
 
     entries.map{|entry| entry.full_name.sub(/(.*)(#|\.).*/, rep) }.uniq
-  rescue RiError
+  rescue RDoc::RI::Error   # RDOC2:formerly RiError
     return nil
   end
 
@@ -411,7 +424,9 @@ class RiService
       options.formatter = RedirectedTextFormatter
     end
     options.width = opt[:width]
-    StringRedirectedDisplay.new(options)
+    # RDOC2:
+    # StringRedirectedDisplay.new(options)
+    StringRedirectedDisplay.new(options.formatter,options.width,options.use_stdout)
   end
 
   def capture_stdout(display)
