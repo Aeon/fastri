@@ -1,11 +1,6 @@
 # Copyright (C) 2006  Mauricio Fernandez <mfp@acm.org>
 #
 
-# evil monkey patch for 1.9.1 compat
-#class String
-#  alias each each_char
-#end
-
 begin
   require 'rdoc/ri/ri_cache'
   require 'rdoc/ri/ri_reader'
@@ -40,9 +35,14 @@ if RUBY_RELEASE_DATE < "2006-06-15"
             @comment.concat old.comment
           end
         end
-      end
+      end # /def merge_in
+
     end
   end
+end
+
+class RDoc::RI::ModuleDescription
+  def superclass; nil; end
 end
 
 
@@ -107,12 +107,12 @@ class RiIndex
         # but RI doesn't support merging at the method-level, so
         path = @ri_index.source_paths_for(self).first
         File.join(File.join(path, *prefix), 
-                  RI::RiWriter.internal_to_external(@name) + 
+                  RDoc::RI::Writer.internal_to_external(@name) + 
                   (singleton_method? ? "-c" : "-i" ) + ".yaml")
       else
         path = @ri_index.paths[@source_index]
         File.join(File.join(path, *prefix), 
-                  RI::RiWriter.internal_to_external(@name) +
+                  RDoc::RI::Writer.internal_to_external(@name) +
                   (singleton_method? ? "-c" : "-i" ) + ".yaml")
       end
     end
@@ -225,7 +225,7 @@ class RiIndex
   end
 
   def rebuild_index(paths = nil)
-    @paths = paths || RI::Paths::PATH
+    @paths = paths || RDoc::RI::Paths::PATH
     @gem_names = paths.map do |p|
       fullp = File.expand_path(p)
       gemname = nil

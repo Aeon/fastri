@@ -151,40 +151,62 @@ class RiService
 
   def completion_list(keyw)
     return @ri_reader.full_class_names if keyw == ""
+    thing = NameDescriptor.new(keyw)
 
-    descriptor = NameDescriptor.new(keyw)
-  
+    # turn "Foo::" into what it should be, an empty partial constant
+    if thing.method_name == "" && thing.is_class_method
+      puts "empty partial constant"
+      thing.class_names << ""
+      thing.method_name = nil
+    end
+
+    list = if thing.method_name.nil?
+             puts "partial constant: #{thing.inspect}"
+             # partial constant
+             base = thing.class_names[0..-1].join("::")
+             part = thing.class_names.last
+             @ri_reader.namespaces_under_matching(base, /^#{base}::#{part}/, false)
+           else
+             puts "partial method: #{thing.inspect}"
+             # partial method
+             sep = case thing.is_class_method
+                   when nil; "(.|#)"
+                   when true; "."
+                   when false; "#"
+                   end
+
+             @ri_reader.methods_under_matching(thing.class_names.join("::"), /^#{Regexp.escape(sep)}#{thing.method_name}/, false)
+           end
+
+    return list.empty? ? nil : list.map{|x| x.full_name}.uniq.sort
+
+=begin  
     if descriptor.class_names.empty?
-      # try partial matches
+      # just a method
       meths = @ri_reader.methods_under_matching("", /(#|\.)#{descriptor.method_name}/, true)
-      ret = meths.map{|x| x.name}.uniq.sort
-      return ret.empty? ? nil : ret
+      ret = meths.map{|x| x.name}.uniq.sort      
+    elsif descriptor.method_name.nil?
+      # partial nested constant, no way it can be a method
+      full_ns_name = descriptor.class_names.join("::")
+      namespaces = @ri_reader.namespaces_under_matching(descriptor.class_names[0..-1].join("::"), /^#{full_ns_name}/, false)
+      ret = namespaces.map{|x| x.full_name}.uniq.sort
+    else
+      # could be a method or constant
+      method_seps = separators(descriptor.is_class_method)
+      method_sep_re = "(" + method_seps.map{|x| Regexp.escape(x)}.join("|") + ")"
+
+      ret = if descriptor.method_name.empty? && descriptor.is_class_method
+              @ri_reader.namespaces_under_matching(full_ns_name, /^#{full_ns_name}::/, false)
+            else        
+              @ri_reader.methods_under_matching(full_ns_name, /#{method_sep_re}#{descriptor.method_name}/, false)
+            end
+
+      ret = ret.map{|x| x.full_name}.uniq.sort
     end
 
-    # if we're here, some namespace was given
-    full_ns_name = descriptor.class_names.join("::")
-    if descriptor.method_name == nil && ! [?#, ?:, ?.].include?(keyw[-1])
-      # partial match
-      namespaces = @ri_reader.namespaces_under_matching("", /^#{full_ns_name}/, false)
-      ret = namespaces.map{|x| x.full_name}.uniq.sort
-      return ret.empty? ? nil : ret
-    else
-      if [?#, ?:, ?.].include?(keyw[-1])
-        seps = case keyw[-1]
-          when ?#; %w[#]
-          when ?:; %w[.]
-          when ?.; %w[. #]
-        end
-      else  # both namespace and method
-        seps = separators(descriptor.is_class_method)
-      end
-      sep_re = "(" + seps.map{|x| Regexp.escape(x)}.join("|") + ")"
-      # partial
-      methods = @ri_reader.methods_under_matching(full_ns_name, /#{sep_re}#{descriptor.method_name}/, false)
-      ret = methods.map{|x| x.full_name}.uniq.sort
-      return ret.empty? ? nil : ret
-    end
-  rescue RiError
+    return ret.empty? ? nil : ret
+=end
+  rescue RDoc::RI::Error
     return nil
   end
 
