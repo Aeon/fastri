@@ -77,7 +77,14 @@ def make_full_text_index(dir)
         next
       end
 
-      desc = (data['comment']||[]).map{|x| linearize(x)}.join("\n")
+      desc = case data['comment']
+             when String
+               data['comment']
+             when Array
+               data['comment'].map{|x| linearize(x)}.join("\n")
+             else
+               ""
+             end
       desc.gsub!(/<\/?(em|b|tt|ul|ol|table)>/, "")
       desc.gsub!(/&quot;/, "'")
       desc.gsub!(/&lt;/, "<")
