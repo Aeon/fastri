@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#! /opt/local/bin/ruby
 # fastri-server: serve RI documentation over DRb 
 # Copyright (C) 2006  Mauricio Fernandez <mfp@acm.org>
 
@@ -17,7 +17,7 @@ def make_index(index_file)
   # will be able to use it with $SAFE = 1.
   ObjectSpace.each_object{|obj| obj.untaint unless obj.frozen? }
 
-  paths = [ RI::Paths::SYSDIR, RI::Paths::SITEDIR, RI::Paths::HOMEDIR ].find_all do |p|
+  paths = [ RDoc::RI::Paths::SYSDIR, RDoc::RI::Paths::SITEDIR, RDoc::RI::Paths::HOMEDIR ].find_all do |p|
     p && File.directory?(p)
   end
   FastRI::Util.gem_directories_unique.each do |name, version, path|

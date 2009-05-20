@@ -35,9 +35,9 @@ end
 # don't let rdoc/ri/ri_paths load rubygems.rb, that takes ~100ms !
 emulation = $".all?{|x| /rubygems\.rb$/ !~ x} # 1.9 compatibility
 $".unshift "rubygems.rb" if emulation
-require 'rdoc/ri/ri_paths'
+require 'rdoc/ri/paths'
 $".delete "rubygems.rb" if emulation
-require 'rdoc/ri/ri_writer'
+require 'rdoc/ri/writer'
 
 module FastRI
 module Util
@@ -83,7 +83,7 @@ module Util
       (path.split(%r{/})[0..-2] << name).join("::")
     when %r{^(.*)/([^/]*)-(i|c)\.yaml$}
       path, escaped_name, type = $~.captures
-      name = RI::RiWriter.external_to_internal(escaped_name)
+      name = RDoc::RI::Writer.external_to_internal(escaped_name)
       sep = ( type == 'c' ) ? "." : "#"
       path.gsub("/", "::") + sep + name
     end
