@@ -1,4 +1,4 @@
-#! /opt/local/bin/ruby
+#! /usr/bin/env ruby
 ## drop-in replacement for the ri-emacs helper script for use 
 #  with ri-ruby.el, using the FastRI service via DRb
 #

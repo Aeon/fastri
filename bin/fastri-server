@@ -1,4 +1,4 @@
-#! /opt/local/bin/ruby
+#! /usr/bin/env ruby
 # fastri-server: serve RI documentation over DRb 
 # Copyright (C) 2006  Mauricio Fernandez <mfp@acm.org>
 
