@@ -1,9 +1,16 @@
 # Copyright (C) 2006  Mauricio Fernandez <mfp@acm.org>
 #
 
-require 'rdoc/ri/cache'
-require 'rdoc/ri/reader'
-require 'rdoc/ri/descriptions'
+begin
+  require 'rdoc/ri/ri_cache'
+  require 'rdoc/ri/ri_reader'
+  require 'rdoc/ri/ri_descriptions'
+rescue LoadError
+  require 'rdoc/ri/cache'
+  require 'rdoc/ri/reader'
+  require 'rdoc/ri/descriptions'
+end
+
 require 'fastri/version'
 
 
@@ -28,15 +35,20 @@ if RUBY_RELEASE_DATE < "2006-06-15"
             @comment.concat old.comment
           end
         end
-      end
+      end # /def merge_in
+
     end
   end
+end
+
+class RDoc::RI::ModuleDescription
+  def superclass; nil; end
 end
 
 
 module FastRI
 
-# This class provides the same functionality as RiReader, with some
+# This class provides the same functionality as Reader, with some
 # improvements:
 # * lower memory consumption
 # * ability to handle information from different sources separately.
@@ -53,7 +65,7 @@ class RiIndex
   # Redefine RI::MethodEntry#full_name to use the following notation:
   # Namespace::Foo.singleton_method (instead of ::). RiIndex depends on this to
   # tell singleton methods apart.
-  class ::RDoc::RI::MethodEntry # :nodoc:
+  class RDoc::RI::MethodEntry # :nodoc:
     remove_method :full_name
     def full_name
       res = @in_class.full_name
@@ -213,7 +225,7 @@ class RiIndex
   end
 
   def rebuild_index(paths = nil)
-    @paths = paths || RI::Paths::PATH
+    @paths = paths || RDoc::RI::Paths::PATH
     @gem_names = paths.map do |p|
       fullp = File.expand_path(p)
       gemname = nil
@@ -234,7 +246,8 @@ class RiIndex
     methods    = Hash.new{|h,k| h[k] = []}
     namespaces = methods.clone 
     @paths.each_with_index do |path, source_index|
-      ri_reader = RDoc::RI::Reader.new(RDoc::RI::Cache.new([path]))
+      puts "buggering #{path}"
+      ri_reader = RDoc::RI::Reader.new(RDoc::RI::Cache.new([path])) # RDOC2: changed path to [path]
       obtain_classes(ri_reader.top_level_namespace.first).each{|name| namespaces[name] << source_index }
       obtain_methods(ri_reader.top_level_namespace.first).each{|name| methods[name] << source_index }
     end
@@ -296,7 +309,7 @@ class RiIndex
     anIO.puts @method_array
     anIO.puts "=" * 80
   end
-#{{{ RiReader compatibility interface
+#{{{ Reader compatibility interface
 
   # Returns an array with the top level namespace.
   def top_level_namespace(scope = nil)
@@ -350,6 +363,8 @@ class RiIndex
   def get_class(class_entry)
     result = nil
     for path in class_entry.path_names
+      # RDOC2:
+      # path = RDoc::RI::RiWriter.class_desc_path(path, class_entry)
       path = RDoc::RI::Writer.class_desc_path(path, class_entry)
       desc = File.open(path) {|f| RDoc::RI::Description.deserialize(f) }
       if result

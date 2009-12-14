@@ -75,6 +75,7 @@ class FullTextIndexer
       full_text_IO.write(footer)
     end
 
+    fulltext.force_encoding "ASCII-8BIT"
     scanner = StringScanner.new(fulltext)
     scanner.scan(Regexp.new(Regexp.escape(MAGIC)))
 

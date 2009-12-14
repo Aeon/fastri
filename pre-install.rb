@@ -2,6 +2,7 @@
 require 'fileutils'
 
 FileUtils.cp "bin/fri", "bin/qri"
+FileUtils.chmod 0644, "bin/qri"
 
 if /win/ =~ RUBY_PLATFORM and /darwin|cygwin/ !~ RUBY_PLATFORM
   %w[fri qri fastri-server ri-emacs].each do |fname|

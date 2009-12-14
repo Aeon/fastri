@@ -33,12 +33,25 @@ unless defined? ::Gem
   end
   require File.join(Config::CONFIG['sitelibdir'],'rubygems','version.rb')
 end
+
+RUBY_VERSION_VECTOR = RUBY_VERSION.split(/\./).each{|x| x.to_i}
+(IT_IS_RUBY19 = RUBY_VERSION_VECTOR <=> [1,9,0]) == 1
+
 # don't let rdoc/ri/ri_paths load rubygems.rb, that takes ~100ms !
 emulation = $".all?{|x| /rubygems\.rb$/ !~ x} # 1.9 compatibility
-$".unshift "rubygems.rb" if emulation
-require 'rdoc/ri/paths'
-$".delete "rubygems.rb" if emulation
-require 'rdoc/ri/writer'
+begin
+  $".unshift "rubygems.rb" if emulation
+  require "rdoc/ri/ri_paths"
+  $".delete "rubygems.rb" if emulation
+  require "rdoc/ri/ri_writer"
+  RI_LIB_PREFIX = "ri_"
+rescue LoadError
+  $".unshift "rubygems.rb" if emulation
+  require "rdoc/ri/paths"
+  $".delete "rubygems.rb" if emulation
+  require "rdoc/ri/writer"
+  RI_LIB_PREFIX = ""
+end
 
 module FastRI
 module Util

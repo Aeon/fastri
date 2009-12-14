@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #! /usr/bin/env ruby
+=======
+#! /usr/local/bin/ruby
+>>>>>>> jedediah/master
 # fastri-server: serve RI documentation over DRb 
 # Copyright (C) 2006  Mauricio Fernandez <mfp@acm.org>
 
@@ -54,7 +58,7 @@ def linearize(comment)
 end
 
 def make_full_text_index(dir)
-  paths = [ RI::Paths::SYSDIR, RI::Paths::SITEDIR, RI::Paths::HOMEDIR ].find_all do |p|
+  paths = [ RDoc::RI::Paths::SYSDIR, RDoc::RI::Paths::SITEDIR, RDoc::RI::Paths::HOMEDIR ].find_all do |p|
     p && File.directory?(p)
   end
   FastRI::Util.gem_directories_unique.each do |name, version, path|
@@ -77,7 +81,14 @@ def make_full_text_index(dir)
         next
       end
 
-      desc = (data['comment']||[]).map{|x| linearize(x)}.join("\n")
+      desc = case data['comment']
+             when String
+               data['comment']
+             when Array
+               data['comment'].map{|x| linearize(x)}.join("\n")
+             else
+               ""
+             end
       desc.gsub!(/<\/?(em|b|tt|ul|ol|table)>/, "")
       desc.gsub!(/&quot;/, "'")
       desc.gsub!(/&lt;/, "<")

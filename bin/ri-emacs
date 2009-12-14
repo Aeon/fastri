@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #! /usr/bin/env ruby
+=======
+#! /usr/local/bin/ruby
+>>>>>>> jedediah/master
 ## drop-in replacement for the ri-emacs helper script for use 
 #  with ri-ruby.el, using the FastRI service via DRb
 #
