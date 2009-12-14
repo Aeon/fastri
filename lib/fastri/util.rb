@@ -31,6 +31,7 @@ unless defined? ::Gem
       end
     end
   end
+  require File.join(Config::CONFIG['sitelibdir'],'rubygems','version.rb')
 end
 # don't let rdoc/ri/ri_paths load rubygems.rb, that takes ~100ms !
 emulation = $".all?{|x| /rubygems\.rb$/ !~ x} # 1.9 compatibility
