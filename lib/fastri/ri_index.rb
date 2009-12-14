@@ -1,9 +1,9 @@
 # Copyright (C) 2006  Mauricio Fernandez <mfp@acm.org>
 #
 
-require 'rdoc/ri/ri_cache'
-require 'rdoc/ri/ri_reader'
-require 'rdoc/ri/ri_descriptions'
+require 'rdoc/ri/cache'
+require 'rdoc/ri/reader'
+require 'rdoc/ri/descriptions'
 require 'fastri/version'
 
 
@@ -53,7 +53,7 @@ class RiIndex
   # Redefine RI::MethodEntry#full_name to use the following notation:
   # Namespace::Foo.singleton_method (instead of ::). RiIndex depends on this to
   # tell singleton methods apart.
-  class ::RI::MethodEntry # :nodoc:
+  class ::RDoc::RI::MethodEntry # :nodoc:
     remove_method :full_name
     def full_name
       res = @in_class.full_name
@@ -90,17 +90,17 @@ class RiIndex
       when nil
         ## we'd like to do
         #@ri_index.source_paths_for(self).map do |path|
-        #  File.join(File.join(path, *prefix), RI::RiWriter.internal_to_external(@name))
+        #  File.join(File.join(path, *prefix), RDoc::RI::Writer.internal_to_external(@name))
         #end
         # but RI doesn't support merging at the method-level, so
         path = @ri_index.source_paths_for(self).first
         File.join(File.join(path, *prefix), 
-                  RI::RiWriter.internal_to_external(@name) + 
+                  RDoc::RI::Writer.internal_to_external(@name) + 
                   (singleton_method? ? "-c" : "-i" ) + ".yaml")
       else
         path = @ri_index.paths[@source_index]
         File.join(File.join(path, *prefix), 
-                  RI::RiWriter.internal_to_external(@name) +
+                  RDoc::RI::Writer.internal_to_external(@name) +
                   (singleton_method? ? "-c" : "-i" ) + ".yaml")
       end
     end
@@ -234,7 +234,7 @@ class RiIndex
     methods    = Hash.new{|h,k| h[k] = []}
     namespaces = methods.clone 
     @paths.each_with_index do |path, source_index|
-      ri_reader = RI::RiReader.new(RI::RiCache.new(path))
+      ri_reader = RDoc::RI::Reader.new(RDoc::RI::Cache.new([path]))
       obtain_classes(ri_reader.top_level_namespace.first).each{|name| namespaces[name] << source_index }
       obtain_methods(ri_reader.top_level_namespace.first).each{|name| methods[name] << source_index }
     end
@@ -343,15 +343,15 @@ class RiIndex
   # by deserializing the YAML.
   def get_method(method_entry)
     path = method_entry.path_name
-    File.open(path) { |f| RI::Description.deserialize(f) }
+    File.open(path) { |f| RDoc::RI::Description.deserialize(f) }
   end
 
   # Return a ClassDescription for a given ClassEntry.
   def get_class(class_entry)
     result = nil
     for path in class_entry.path_names
-      path = RI::RiWriter.class_desc_path(path, class_entry)
-      desc = File.open(path) {|f| RI::Description.deserialize(f) }
+      path = RDoc::RI::Writer.class_desc_path(path, class_entry)
+      desc = File.open(path) {|f| RDoc::RI::Description.deserialize(f) }
       if result
         result.merge_in(desc)
       else

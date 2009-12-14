@@ -85,7 +85,7 @@ def linearize(comment)
   end
 end
 
-require 'rdoc/ri/ri_paths'
+require 'rdoc/ri/paths'
 require 'yaml'
 $:.unshift "lib"
 require 'fastri/util'

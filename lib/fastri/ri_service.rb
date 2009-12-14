@@ -2,10 +2,10 @@
 #
 # Inspired by ri-emacs.rb by Kristof Bastiaensen <kristof@vleeuwen.org>
  
-require 'rdoc/ri/ri_paths'
-require 'rdoc/ri/ri_util'
-require 'rdoc/ri/ri_formatter'
-require 'rdoc/ri/ri_display'
+require 'rdoc/ri/paths'
+require 'rdoc/ri/util'
+require 'rdoc/ri/formatter'
+require 'rdoc/ri/display'
 
 require 'fastri/ri_index.rb'
 require 'fastri/name_descriptor'
@@ -26,7 +26,7 @@ class ::DefaultDisplay
   end
 end
 
-class StringRedirectedDisplay < ::DefaultDisplay
+class StringRedirectedDisplay < ::RDoc::RI::DefaultDisplay
   attr_reader :stringio, :formatter
   def initialize(*args)
     super(*args)
@@ -47,7 +47,7 @@ class StringRedirectedDisplay < ::DefaultDisplay
   end
 end
 
-class ::RI::TextFormatter
+class ::RDoc::RI::TextFormatter
   def puts(*a); @stringio.puts(*a) end
   def print(*a); @stringio.print(*a) end
 end
@@ -60,11 +60,11 @@ module FormatterRedirection
   end
 end
 
-class RedirectedAnsiFormatter < RI::AnsiFormatter
+class RedirectedAnsiFormatter < ::RDoc::RI::AnsiFormatter
   include FormatterRedirection
 end
 
-class RedirectedTextFormatter < RI::TextFormatter
+class RedirectedTextFormatter < ::RDoc::RI::TextFormatter
   include FormatterRedirection
 end
 
@@ -173,7 +173,7 @@ class RiService
       ret = methods.map{|x| x.full_name}.uniq.sort
       return ret.empty? ? nil : ret
     end
-  rescue RiError
+  rescue RDoc::Error
     return nil
   end
 
@@ -189,7 +189,7 @@ class RiService
     descriptor = NameDescriptor.new(keyword)
     ret = obtain_entries(descriptor, options).map{|x| x.full_name}
     ret ? ret : nil
-  rescue RiError
+  rescue RDoc::Error
     return nil
   end
 
@@ -205,7 +205,7 @@ class RiService
       case entries[0].type
       when :namespace
         capture_stdout(display(options)) do |display|
-          display.display_class_info(@ri_reader.get_class(entries[0]), @ri_reader)
+          display.display_class_info(@ri_reader.get_class(entries[0]))
           if options[:extended]
             methods = @ri_reader.methods_under(entries[0], true)
             methods.each do |meth_entry|
@@ -226,7 +226,7 @@ class RiService
         formatter.wrap(entries.map{|x| x.full_name}.join(", "))
       end
     end
-  rescue RiError
+  rescue RDoc::Error
     return nil
   end
 
@@ -245,7 +245,7 @@ class RiService
       end
     end
     params_text
-  rescue RiError
+  rescue RDoc::Error
     return nil
   end
 
@@ -383,7 +383,7 @@ class RiService
     return nil if entries.empty?
 
     entries.map{|entry| entry.full_name.sub(/(.*)(#|\.).*/, rep) }.uniq
-  rescue RiError
+  rescue RDoc::Error
     return nil
   end
 
@@ -411,7 +411,7 @@ class RiService
       options.formatter = RedirectedTextFormatter
     end
     options.width = opt[:width]
-    StringRedirectedDisplay.new(options)
+    StringRedirectedDisplay.new(options.formatter, options.width, options.use_stdout)
   end
 
   def capture_stdout(display)

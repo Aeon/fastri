@@ -15,7 +15,7 @@ module FastRI
 #   <tt>foo::bar</tt>
 # * <tt>foo::bar::Baz<tt>: module/class foo:bar::Baz
 # * <tt>foo::bar::baz</tt>: singleton method +baz+ from <tt>foo::bar</tt>
-# * other: raise RiError
+# * other: raise RDoc::Error
 class NameDescriptor
   attr_reader :class_names
   attr_reader :method_name
@@ -57,7 +57,7 @@ class NameDescriptor
         @is_class_method = nil
       end
     else
-      raise RiError, "Cannot create NameDescriptor from #{arg}"
+      raise RDoc::Error, "Cannot create NameDescriptor from #{arg}"
     end
   end
 
