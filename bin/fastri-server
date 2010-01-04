@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 #! /usr/bin/env ruby
-=======
-#! /usr/local/bin/ruby
->>>>>>> jedediah/master
 # fastri-server: serve RI documentation over DRb 
 # Copyright (C) 2006  Mauricio Fernandez <mfp@acm.org>
 
